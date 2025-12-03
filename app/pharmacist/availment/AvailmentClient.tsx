@@ -123,7 +123,7 @@ export default function PharmacistAvailmentClient() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rx) return;
 
@@ -246,10 +246,23 @@ export default function PharmacistAvailmentClient() {
       }
     }
 
+    // 4) mark prescription as FILLED / FINISHED
+    const { error: statusError } = await supabase
+      .from("prescriptions")
+      .update({ status: "FILLED" }) // or "FINISHED"
+      .eq("id", rx.id);
+
+    if (statusError) {
+      console.error("Status update error:", statusError);
+      // we won't block printing for this, just log it
+    }
+
     setSaving(false);
-    alert("Availment slip saved.");
-    router.push("/pharmacist/availments");
+
+    // ⬇️ Go straight to printable availment slip page
+    router.push(`/pharmacist/availments/${slip.id}`);
   };
+
 
   if (loading) {
     return (
