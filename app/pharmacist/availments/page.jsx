@@ -100,43 +100,37 @@ export default function PharmacistAvailmentsListPage() {
         )}
 
         <div className="space-y-2">
-          {slips.map((s) => {
-            const total =
-              typeof s.total === "number"
-                ? s.total.toFixed(2)
-                : Number(s.total || 0).toFixed(2);
-            const covered =
-              typeof s.amount_covered === "number"
-                ? s.amount_covered.toFixed(2)
-                : Number(s.amount_covered || 0).toFixed(2);
+  {slips.length === 0 && (
+    <p className="text-sm text-slate-400">
+      You haven't created any availment slips yet.
+    </p>
+  )}
 
-            return (
-              <div
-                key={s.id}
-                className="w-full text-left bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">
-                      {s.patient_name || "Unknown patient"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Txn: {s.transaction_number || "—"}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-gray-500">
-                      {s.date || "—"}
-                    </div>
-                    <div className="text-[11px] text-gray-500 mt-1">
-                      Total: ₱{total} &nbsp;|&nbsp; Covered: ₱{covered}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+  {slips.map((s) => (
+    <button
+      key={s.id}
+      onClick={() => router.push(`/pharmacist/availments/${s.id}`)}
+      className="w-full text-left bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 shadow-sm"
+    >
+      <div className="flex justify-between items-center">
+        <div className="text-sm font-semibold text-gray-900">
+          {s.patient_name || "Unknown patient"}
         </div>
+        <div className="text-xs text-gray-500">{s.date}</div>
+      </div>
+
+      <div className="text-xs text-gray-600">
+        Txn: {s.transaction_number || "—"}
+      </div>
+
+      <div className="text-[11px] text-gray-500 mt-1">
+        Total: ₱{s.total?.toFixed?.(2) || "0.00"} | Covered: ₱
+        {s.amount_covered?.toFixed?.(2) || "0.00"}
+      </div>
+    </button>
+  ))}
+</div>
+
       </div>
     </main>
   );
