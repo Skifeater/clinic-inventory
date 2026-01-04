@@ -4,7 +4,7 @@ export function AppHeader({
   showBack = false, 
   backHref = "/",
   backLabel = "Back to home",
-  rightContent 
+  rightContent = null
 }) {
   return (
     <header className="border-b border-gray-200 bg-white">
