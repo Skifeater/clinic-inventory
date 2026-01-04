@@ -3,10 +3,10 @@ import Link from "next/link";
 export function PageHeader({ 
   title, 
   description, 
-  backHref, 
+  backHref = null, 
   backLabel = "Back to dashboard",
-  badge,
-  actions,
+  badge = null,
+  actions = null,
   className = ""
 }) {
   return (
