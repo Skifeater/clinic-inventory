@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
+import { PageContainer } from "../../../components/layout/PageContainer";
+import { PageHeader } from "../../../components/layout/PageHeader";
+import { Card } from "../../../components/ui/Card";
+import { Button } from "../../../components/ui/Button";
+import { Alert } from "../../../components/ui/Alert";
 
 export default function PharmacistInventoryPage() {
   const router = useRouter();
@@ -138,44 +143,27 @@ export default function PharmacistInventoryPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center">
-        <p className="text-sm text-gray-500">Loading inventory...</p>
-      </main>
+      <PageContainer>
+        <Card>
+          <p className="text-sm text-gray-500">Loading inventory...</p>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        {/* Top bar */}
-        <div className="flex items-center justify-between">
-          <button
-            className="text-xs text-gray-500 hover:text-gray-800"
-            onClick={() => router.push("/dashboard")}
-          >
-            ← Back to dashboard
-          </button>
-          <span className="text-[11px] text-gray-400">
-            Pharmacist · Inventory
-          </span>
-        </div>
+    <PageContainer maxWidth="xl">
+      <PageHeader
+        title="Pharmacy Inventory"
+        description="View and adjust current stock for PhilHealth GAMOT medicines."
+        backHref="/dashboard"
+        badge="Pharmacist · Inventory"
+      />
 
-        {/* Heading */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Pharmacy Inventory</h1>
-          <p className="text-sm text-gray-500">
-            View and adjust current stock for PhilHealth GAMOT medicines.
-          </p>
-        </div>
-
-        {errorMsg && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-md">
-            {errorMsg}
-          </div>
-        )}
+      {errorMsg && <Alert variant="error">{errorMsg}</Alert>}
 
         {/* Table card */}
-        <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm overflow-x-auto">
+        <Card padding="sm" className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="border-b border-gray-200 text-gray-500">
@@ -229,7 +217,7 @@ export default function PharmacistInventoryPage() {
                   </td>
                   <td className="py-2 pr-2 text-right">
                     <input
-                      className="w-24 bg-white border border-gray-300 rounded-md px-2 py-1 text-right text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+                      className="w-24 bg-white border border-gray-300 rounded-lg px-2 py-1 text-right text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       value={row.delta}
                       onChange={(e) =>
                         handleDeltaChange(index, e.target.value)
@@ -238,26 +226,24 @@ export default function PharmacistInventoryPage() {
                     />
                   </td>
                   <td className="py-2 pl-2 text-right">
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
                       onClick={() => handleApplyChange(index)}
                       disabled={savingRowId === row.id}
-                      className="px-3 py-1.5 rounded-md bg-emerald-500 text-white text-xs font-medium hover:bg-emerald-400 disabled:opacity-60"
                     >
                       {savingRowId === row.id ? "Saving..." : "Apply"}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
 
         <p className="text-[11px] text-gray-500">
           Tip: Use positive numbers to add stock (e.g. +20) and negative numbers
           to deduct (e.g. -5). Stock will not be allowed to go below zero.
         </p>
-      </div>
-    </main>
+    </PageContainer>
   );
 }

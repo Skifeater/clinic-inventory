@@ -3,6 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
+import { PageContainer } from "../../../components/layout/PageContainer";
+import { PageHeader } from "../../../components/layout/PageHeader";
+import { Card } from "../../../components/ui/Card";
+import { Input } from "../../../components/ui/Input";
+import { Button } from "../../../components/ui/Button";
+import { Alert } from "../../../components/ui/Alert";
 
 export default function PhysicianPrescriptionPage() {
   const router = useRouter();
@@ -201,103 +207,67 @@ export default function PhysicianPrescriptionPage() {
 
   // ---- RENDER ----
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="text-xs text-gray-500 hover:text-gray-700 mb-3"
-        >
-          ← Back to dashboard
-        </button>
+    <PageContainer maxWidth="lg">
+      <PageHeader
+        title="PhilHealth GAMOT Prescription"
+        description="Fill out the patient details and Rx for PhilHealth GAMOT."
+        backHref="/dashboard"
+        badge="Physician · Create Prescription"
+      />
 
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold">
-                PhilHealth GAMOT Prescription
-              </h1>
-              <p className="text-xs text-gray-500">
-                Fill out the patient details and Rx for PhilHealth GAMOT.
-              </p>
-            </div>
-          </div>
+      <Card padding="lg">
+        {errorMsg && <Alert variant="error" className="mb-4">{errorMsg}</Alert>}
 
-          {errorMsg && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded">
-              {errorMsg}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* SECTION: PATIENT + HEADER */}
-            <section className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/60">
+            <section className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/60">
               <h2 className="text-sm font-semibold text-gray-700">
                 Patient & Header
               </h2>
               <div className="grid md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                    value={header.date}
-                    onChange={(e) =>
-                      handleHeaderChange("date", e.target.value)
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    UPSC
-                  </label>
-                  <input
-                    type="text"
-                    className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                    value={header.upsc}
-                    onChange={(e) =>
-                      handleHeaderChange("upsc", e.target.value)
-                    }
-                  />
-                </div>
+                <Input
+                  label="Date"
+                  type="date"
+                  value={header.date}
+                  onChange={(e) =>
+                    handleHeaderChange("date", e.target.value)
+                  }
+                />
+                <Input
+                  label="UPSC"
+                  type="text"
+                  value={header.upsc}
+                  onChange={(e) =>
+                    handleHeaderChange("upsc", e.target.value)
+                  }
+                />
               </div>
 
               <div className="grid md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Beneficiary Name
-                  </label>
-                  <input
-                    type="text"
-                    className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                    value={header.beneficiaryName}
-                    onChange={(e) =>
-                      handleHeaderChange("beneficiaryName", e.target.value)
-                    }
-                  />
-                </div>
+                <Input
+                  label="Beneficiary Name"
+                  type="text"
+                  value={header.beneficiaryName}
+                  onChange={(e) =>
+                    handleHeaderChange("beneficiaryName", e.target.value)
+                  }
+                />
 
                 <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Age
-                    </label>
-                    <input
-                      type="number"
-                      className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                      value={header.age}
-                      onChange={(e) =>
-                        handleHeaderChange("age", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <Input
+                    label="Age"
+                    type="number"
+                    value={header.age}
+                    onChange={(e) =>
+                      handleHeaderChange("age", e.target.value)
+                    }
+                  />
+                  <div className="flex flex-col col-span-2">
+                    <label className="block text-xs font-medium mb-1.5 text-gray-700">
                       Sex
                     </label>
                     <select
-                      className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
+                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       value={header.sex}
                       onChange={(e) =>
                         handleHeaderChange("sex", e.target.value)
@@ -311,56 +281,46 @@ export default function PhysicianPrescriptionPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                  value={header.address}
-                  onChange={(e) =>
-                    handleHeaderChange("address", e.target.value)
-                  }
-                />
-              </div>
+              <Input
+                label="Address"
+                type="text"
+                value={header.address}
+                onChange={(e) =>
+                  handleHeaderChange("address", e.target.value)
+                }
+              />
             </section>
 
             {/* SECTION: DIAGNOSIS + PIN */}
-            <section className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/60">
+            <section className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/60">
               <h2 className="text-sm font-semibold text-gray-700">
                 Diagnosis & PhilHealth
               </h2>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
+              <div className="flex flex-col">
+                <label className="block text-xs font-medium mb-1.5 text-gray-700">
                   Diagnosis
                 </label>
                 <textarea
                   rows={2}
-                  className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   value={header.diagnosis}
                   onChange={(e) =>
                     handleHeaderChange("diagnosis", e.target.value)
                   }
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  PhilHealth PIN (optional)
-                </label>
-                <input
-                  type="text"
-                  className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                  value={header.pin}
-                  onChange={(e) =>
-                    handleHeaderChange("pin", e.target.value)
-                  }
-                />
-              </div>
+              <Input
+                label="PhilHealth PIN (optional)"
+                type="text"
+                value={header.pin}
+                onChange={(e) =>
+                  handleHeaderChange("pin", e.target.value)
+                }
+              />
             </section>
 
             {/* SECTION: RX */}
-            <section className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/60">
+            <section className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/60">
               <h2 className="text-sm font-semibold text-gray-700 flex items-center justify-between">
                 Rx
                 <span className="text-[11px] text-gray-400 font-normal">
@@ -371,19 +331,19 @@ export default function PhysicianPrescriptionPage() {
               {items.map((item, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-md p-3 space-y-2 bg-white"
+                  className="border border-gray-200 rounded-lg p-3 space-y-3 bg-white"
                 >
-                  <p className="text-xs font-semibold text-gray-700 mb-1">
+                  <p className="text-xs font-semibold text-gray-700">
                     {index + 1}. Medication
                   </p>
 
                   {/* Dropdown */}
-                  <div>
-                    <label className="block text-[11px] font-medium text-gray-500 mb-1">
+                  <div className="flex flex-col">
+                    <label className="block text-[11px] font-medium text-gray-500 mb-1.5">
                       Select from medicine list (optional)
                     </label>
                     <select
-                      className="border border-gray-300 rounded w-full px-2 py-1 text-xs bg-white text-black"
+                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       value={item.medicineId || ""}
                       onChange={(e) =>
                         handleMedicineSelect(index, e.target.value)
@@ -402,108 +362,78 @@ export default function PhysicianPrescriptionPage() {
 
                   {/* Manual text fields */}
                   <div className="grid md:grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
-                        Generic Name
-                      </label>
-                      <input
-                        placeholder="e.g. Amoxicillin"
-                        className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                        value={item.genericName}
-                        onChange={(e) =>
-                          handleItemChange(
-                            index,
-                            "genericName",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
-                        Strength / Preparation
-                      </label>
-                      <input
-                        placeholder="e.g. 500 mg capsule"
-                        className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                        value={item.dosageStrength}
-                        onChange={(e) =>
-                          handleItemChange(
-                            index,
-                            "dosageStrength",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
+                    <Input
+                      label="Generic Name"
+                      placeholder="e.g. Amoxicillin"
+                      value={item.genericName}
+                      onChange={(e) =>
+                        handleItemChange(
+                          index,
+                          "genericName",
+                          e.target.value
+                        )
+                      }
+                    />
+                    <Input
+                      label="Strength / Preparation"
+                      placeholder="e.g. 500 mg capsule"
+                      value={item.dosageStrength}
+                      onChange={(e) =>
+                        handleItemChange(
+                          index,
+                          "dosageStrength",
+                          e.target.value
+                        )
+                      }
+                    />
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
                     <div className="col-span-3">
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
-                        Sig.
-                      </label>
-                      <input
+                      <Input
+                        label="Sig."
                         placeholder="Take 1 tab every 8 hours for 7 days"
-                        className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
                         value={item.sig}
                         onChange={(e) =>
                           handleItemChange(index, "sig", e.target.value)
                         }
                       />
                     </div>
-                    <div>
-                      <label className="block text-[11px] font-medium text-gray-500 mb-1">
-                        Qty
-                      </label>
-                      <input
-                        placeholder="e.g. 30"
-                        className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleItemChange(index, "quantity", e.target.value)
-                        }
-                      />
-                    </div>
+                    <Input
+                      label="Qty"
+                      placeholder="e.g. 30"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(index, "quantity", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
               ))}
             </section>
 
             {/* SECTION: Follow-up */}
-            <section className="border border-gray-200 rounded-lg p-3 space-y-2 bg-gray-50/60">
+            <section className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/60">
               <h2 className="text-sm font-semibold text-gray-700">
                 Follow-up (optional)
               </h2>
-              <div className="grid md:grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Follow-up Date
-                  </label>
-                  <input
-                    type="date"
-                    className="border border-gray-300 rounded w-full px-2 py-1 text-sm bg-white text-black"
-                    value={header.followUpDate}
-                    onChange={(e) =>
-                      handleHeaderChange("followUpDate", e.target.value)
-                    }
-                  />
-                </div>
-              </div>
+              <Input
+                label="Follow-up Date"
+                type="date"
+                value={header.followUpDate}
+                onChange={(e) =>
+                  handleHeaderChange("followUpDate", e.target.value)
+                }
+              />
             </section>
 
             <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-4 py-2 rounded-md bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 disabled:opacity-60"
-              >
+              <Button type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save Prescription"}
-              </button>
+              </Button>
             </div>
           </form>
-        </div>
-      </div>
-    </main>
+      </Card>
+    </PageContainer>
   );
 }

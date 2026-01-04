@@ -1,40 +1,24 @@
 import Link from "next/link";
+import { AppHeader } from "../components/layout/AppHeader";
+import { Button } from "../components/ui/Button";
 
 export default function Home() {
   const year = new Date().getFullYear();
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      {/* Top bar */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-lg">
-              G
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">
-                GAMOT e-Clinic
-              </h1>
-              <p className="text-xs text-gray-500">
-                PhilHealth GAMOT · Inventory & e-Prescription
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
+      <AppHeader
+        rightContent={
+          <>
             <span className="hidden sm:inline text-[11px] text-gray-400">
               Prototype · v0.1
             </span>
-            <Link
-              href="/login"
-              className="text-xs font-medium text-gray-700 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50"
-            >
-              Login
-            </Link>
-          </div>
-        </div>
-      </header>
+            <Button variant="secondary" size="sm" asChild>
+              <Link href="/login">Login</Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Main content */}
       <section className="flex-1 flex items-center">
@@ -58,14 +42,14 @@ export default function Home() {
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 shadow-sm hover:shadow-md transition-all duration-150"
               >
                 Login to GAMOT e-Clinic
               </Link>
 
               <Link
                 href="/create-account"
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-800 bg-white hover:bg-gray-50"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-all duration-150"
               >
                 Create an account
               </Link>

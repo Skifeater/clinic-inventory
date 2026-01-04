@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
+import { PageContainer } from "../../../components/layout/PageContainer";
+import { PageHeader } from "../../../components/layout/PageHeader";
+import { Card } from "../../../components/ui/Card";
+import { Input } from "../../../components/ui/Input";
+import { Button } from "../../../components/ui/Button";
+import { Alert } from "../../../components/ui/Alert";
 
 export default function PharmacistSearchRxPage() {
   const router = useRouter();
@@ -73,99 +79,79 @@ export default function PharmacistSearchRxPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center">
-        <p className="text-sm text-gray-500">Loading...</p>
-      </main>
+      <PageContainer>
+        <Card>
+          <p className="text-sm text-gray-500">Loading...</p>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-        {/* Top bar / back link */}
-        <div className="flex items-center justify-between">
-          <button
-            className="text-xs text-gray-500 hover:text-gray-800"
-            onClick={() => router.push("/dashboard")}
-          >
-            ← Back to dashboard
-          </button>
-          <span className="text-[11px] text-gray-400">
-            Pharmacist · Search Rx
-          </span>
-        </div>
+    <PageContainer maxWidth="lg">
+      <PageHeader
+        title="Search Prescription (GAMOT)"
+        description="Search by Rx code, patient name, or PhilHealth PIN."
+        backHref="/dashboard"
+        badge="Pharmacist · Search Rx"
+      />
 
-        {/* Heading */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Search Prescription (GAMOT)</h1>
-          <p className="text-sm text-gray-500">
-            Search by Rx code, patient name, or PhilHealth PIN.
-          </p>
-        </div>
+      {errorMsg && <Alert variant="error">{errorMsg}</Alert>}
 
-        {errorMsg && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-md">
-            {errorMsg}
-          </div>
-        )}
-
-        {/* Search box */}
-        <form
-          onSubmit={handleSearch}
-          className="flex gap-2 bg-white border border-gray-200 rounded-xl p-3 shadow-sm"
-        >
+      {/* Search box */}
+      <Card>
+        <form onSubmit={handleSearch} className="flex gap-2">
           <input
-            className="flex-1 bg-white border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             placeholder="RX-2025-000123, Juan Dela Cruz, or PIN..."
             value={term}
             onChange={(e) => setTerm(e.target.value)}
           />
-          <button
-            type="submit"
-            className="px-4 py-1.5 rounded-md bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition disabled:opacity-60"
-          >
-            Search
-          </button>
+          <Button type="submit">Search</Button>
         </form>
+      </Card>
 
-        {/* Results list */}
-        <div className="space-y-2">
-          {results.length === 0 && !term && (
+      {/* Results list */}
+      <div className="space-y-2">
+        {results.length === 0 && !term && (
+          <Card>
             <p className="text-xs text-gray-400">
               Type a patient name, Rx code, or PIN then press Search.
             </p>
-          )}
+          </Card>
+        )}
 
-          {results.length === 0 && term && !errorMsg && (
+        {results.length === 0 && term && !errorMsg && (
+          <Card>
             <p className="text-xs text-gray-400">
               No prescriptions found matching <span className="font-medium">"{term}"</span>.
             </p>
-          )}
+          </Card>
+        )}
 
-          {results.map((rx) => (
-            <button
-              key={rx.id}
-              onClick={() => openAvailment(rx.id)}
-              className="w-full text-left bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:bg-gray-50"
-            >
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-sm text-gray-900">
-                  {rx.rx_code || "(no code)"} – {rx.beneficiary_name}
-                </span>
-                <span className="text-xs text-gray-500">{rx.date}</span>
+        {results.map((rx) => (
+          <button
+            key={rx.id}
+            onClick={() => openAvailment(rx.id)}
+            className="w-full text-left bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-sm text-gray-900">
+                {rx.rx_code || "(no code)"} – {rx.beneficiary_name}
+              </span>
+              <span className="text-xs text-gray-500">{rx.date}</span>
+            </div>
+            <div className="text-xs text-gray-500 mt-0.5">
+              Dx: {rx.diagnosis || "—"}
+            </div>
+            {rx.pin && (
+              <div className="text-[11px] text-gray-400 mt-0.5">
+                PIN: {rx.pin}
               </div>
-              <div className="text-xs text-gray-500 mt-0.5">
-                Dx: {rx.diagnosis || "—"}
-              </div>
-              {rx.pin && (
-                <div className="text-[11px] text-gray-400 mt-0.5">
-                  PIN: {rx.pin}
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
+            )}
+          </button>
+        ))}
       </div>
-    </main>
+    </PageContainer>
   );
 }

@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { supabase } from "../../lib/supabaseClient";
+import { AppHeader } from "../../components/layout/AppHeader";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
+import { Alert } from "../../components/ui/Alert";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -39,54 +45,49 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-900">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-        <h1 className="text-xl font-semibold">Forgot Password</h1>
-        <p className="text-xs text-gray-500">
-          Enter your email and we’ll send you a link to reset your password.
-        </p>
+    <main className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
+      <AppHeader showBack backHref="/login" backLabel="Back to login" />
+      
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+          <Card padding="lg">
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-xl font-semibold mb-1">Forgot Password</h1>
+                <p className="text-sm text-gray-500">
+                  Enter your email and we'll send you a link to reset your password.
+                </p>
+              </div>
 
-        {message && (
-          <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-md">
-            {message}
-          </div>
-        )}
-        {error && (
-          <div className="text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-md">
-            {error}
-          </div>
-        )}
+              {message && <Alert variant="success">{message}</Alert>}
+              {error && <Alert variant="error">{error}</Alert>}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs mb-1 text-gray-600">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm text-gray-900"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Input
+                  label="Email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-medium rounded-lg py-2 disabled:opacity-60"
-          >
-            {submitting ? "Sending..." : "Send reset link"}
-          </button>
-        </form>
+                <Button type="submit" disabled={submitting} className="w-full">
+                  {submitting ? "Sending..." : "Send reset link"}
+                </Button>
+              </form>
 
-        <div className="text-xs text-gray-500 text-center">
-          Remembered your password?{" "}
-          <a
-            href="/login"
-            className="text-emerald-600 hover:text-emerald-500 font-medium"
-          >
-            Back to login
-          </a>
+              <div className="text-xs text-gray-500 text-center">
+                Remembered your password?{" "}
+                <Link
+                  href="/login"
+                  className="text-emerald-600 hover:text-emerald-500 font-medium"
+                >
+                  Back to login
+                </Link>
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </main>

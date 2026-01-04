@@ -4,6 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
+import { AppHeader } from "../../components/layout/AppHeader";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { Card } from "../../components/ui/Card";
+import { Input } from "../../components/ui/Input";
+import { Button } from "../../components/ui/Button";
+import { Alert } from "../../components/ui/Alert";
 
 const initialForm = {
   full_name: "",
@@ -150,253 +156,155 @@ export default function CreateAccountPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      {/* Top bar */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="font-semibold text-sm text-gray-900">
-            GAMOT e-Clinic
-          </Link>
-          <Link
-            href="/"
-            className="text-xs text-gray-500 hover:text-gray-800"
-          >
-            ← Back to home
-          </Link>
-        </div>
-      </header>
+      <AppHeader showBack backHref="/" backLabel="Back to home" />
 
       <section className="flex-1">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          <h1 className="text-2xl font-semibold mb-1">Create account</h1>
-          <p className="text-sm text-gray-500 mb-5">
-            Register a Physician, Pharmacist, or Pharmacy Manager. This will be
-            used for prescriptions and availment slips.
-          </p>
+          <PageHeader
+            title="Create account"
+            description="Register a Physician, Pharmacist, or Pharmacy Manager. This will be used for prescriptions and availment slips."
+          />
 
-          {error && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-              {success}
-            </div>
-          )}
+          {error && <Alert variant="error" className="mb-4">{error}</Alert>}
+          {success && <Alert variant="success" className="mb-4">{success}</Alert>}
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid gap-4 md:grid-cols-2 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
-          >
-            {/* Full name */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Full Name *
-              </label>
-              <input
+          <Card>
+            <form
+              onSubmit={handleSubmit}
+              className="grid gap-4 md:grid-cols-2"
+            >
+              <Input
+                label="Full Name"
                 name="full_name"
                 value={form.full_name}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="Dr. Juan Dela Cruz"
+                required
               />
-            </div>
 
-            {/* Email */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Email *
-              </label>
-              <input
+              <Input
+                label="Email"
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="name@example.com"
+                required
               />
-            </div>
 
-            {/* Phone */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Phone Number
-              </label>
-              <input
+              <Input
+                label="Phone Number"
                 name="phone_number"
                 value={form.phone_number}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="09XXXXXXXXX"
               />
-            </div>
 
-            {/* Birthday */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Birthday
-              </label>
-              <input
+              <Input
+                label="Birthday"
                 type="date"
                 name="birthday"
                 value={form.birthday}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
               />
-            </div>
 
-            {/* Role */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Role *
-              </label>
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
-              >
-                <option value="physician">Physician</option>
-                <option value="pharmacist">Pharmacist</option>
-                <option value="manager">Pharmacy Manager</option>
-              </select>
-            </div>
+              <div className="flex flex-col">
+                <label className="block text-xs font-medium mb-1.5 text-gray-700">
+                  Role <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="physician">Physician</option>
+                  <option value="pharmacist">Pharmacist</option>
+                  <option value="manager">Pharmacy Manager</option>
+                </select>
+              </div>
 
-            {/* PRC number */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                PRC Number (for Physician / Pharmacist)
-              </label>
-              <input
+              <Input
+                label="PRC Number (for Physician / Pharmacist)"
                 name="prc_number"
                 value={form.prc_number}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="XXXXX"
               />
-            </div>
 
-            {/* PRC validity */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                PRC Validity
-              </label>
-              <input
+              <Input
+                label="PRC Validity"
                 type="date"
                 name="prc_validity"
                 value={form.prc_validity}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
               />
-            </div>
 
-            {/* GAMOT facility name */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Name of GAMOT Facility{" "}
-                {needsGamotFacility && <span className="text-red-500">*</span>}
-              </label>
-              <input
+              <Input
+                label={`Name of GAMOT Facility${needsGamotFacility ? " *" : ""}`}
                 name="gamot_facility_name"
                 value={form.gamot_facility_name}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="GAMOT Pharmacy - BGC"
                 required={needsGamotFacility}
                 disabled={isPhysician}
               />
-            </div>
 
-            {/* GAMOT facility PhilHealth */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                PhilHealth Accreditation No. (GAMOT Facility){" "}
-                {needsGamotFacility && <span className="text-red-500">*</span>}
-              </label>
-              <input
+              <Input
+                label={`PhilHealth Accreditation No. (GAMOT Facility)${needsGamotFacility ? " *" : ""}`}
                 name="gamot_facility_philhealth_accreditation"
                 value={form.gamot_facility_philhealth_accreditation}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 required={needsGamotFacility}
                 disabled={isPhysician}
               />
-            </div>
 
-            {/* PCB provider name */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Primary Care Benefit Provider Name{" "}
-                {isPhysician && <span className="text-red-500">*</span>}
-              </label>
-              <input
+              <Input
+                label={`Primary Care Benefit Provider Name${isPhysician ? " *" : ""}`}
                 name="pcb_provider_name"
                 value={form.pcb_provider_name}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="e.g. PhilHealth Konsulta Provider"
                 required={isPhysician}
                 disabled={needsGamotFacility}
               />
-            </div>
 
-            {/* PCB provider PhilHealth */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                PhilHealth Accreditation No. (PCBP Facility){" "}
-                {isPhysician && <span className="text-red-500">*</span>}
-              </label>
-              <input
+              <Input
+                label={`PhilHealth Accreditation No. (PCBP Facility)${isPhysician ? " *" : ""}`}
                 name="pcb_provider_philhealth_accreditation"
                 value={form.pcb_provider_philhealth_accreditation}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 required={isPhysician}
                 disabled={needsGamotFacility}
               />
-            </div>
 
-            {/* Password */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Password *
-              </label>
-              <input
+              <Input
+                label="Password"
                 type="password"
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="••••••••"
+                required
               />
-            </div>
 
-            {/* Confirm password */}
-            <div className="flex flex-col">
-              <label className="text-xs font-medium mb-1 text-gray-700">
-                Confirm Password *
-              </label>
-              <input
+              <Input
+                label="Confirm Password"
                 type="password"
                 name="confirm_password"
                 value={form.confirm_password}
                 onChange={handleChange}
-                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="••••••••"
+                required
               />
-            </div>
 
-            {/* Submit */}
-            <div className="md:col-span-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 disabled:opacity-60 shadow-sm"
-              >
-                {submitting ? "Creating account..." : "Create Account"}
-              </button>
-            </div>
-          </form>
+              <div className="md:col-span-2 flex justify-end">
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? "Creating account..." : "Create Account"}
+                </Button>
+              </div>
+            </form>
+          </Card>
         </div>
       </section>
     </main>

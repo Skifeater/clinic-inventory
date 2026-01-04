@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
+import { PageContainer } from "../../../components/layout/PageContainer";
+import { PageHeader } from "../../../components/layout/PageHeader";
+import { Card } from "../../../components/ui/Card";
+import { Alert } from "../../../components/ui/Alert";
 
 export default function PharmacistAvailmentsListPage() {
   const router = useRouter();
@@ -58,80 +62,58 @@ export default function PharmacistAvailmentsListPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 text-gray-900 flex items-center justify-center">
-        <p className="text-sm text-gray-500">Loading...</p>
-      </div>
+      <PageContainer>
+        <Card>
+          <p className="text-sm text-gray-500">Loading...</p>
+        </Card>
+      </PageContainer>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-        {/* Top bar */}
-        <div className="flex items-center justify-between">
-          <button
-            className="text-xs text-gray-500 hover:text-gray-800"
-            onClick={() => router.push("/dashboard")}
-          >
-            ← Back to dashboard
-          </button>
-          <span className="text-[11px] text-gray-400">
-            Pharmacist · My Availments
-          </span>
-        </div>
+    <PageContainer maxWidth="lg">
+      <PageHeader
+        title="My Availment Slips"
+        description="List of PhilHealth GAMOT availment slips you have encoded."
+        backHref="/dashboard"
+        badge="Pharmacist · My Availments"
+      />
 
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">My Availment Slips</h1>
-          <p className="text-sm text-gray-500">
-            List of PhilHealth GAMOT availment slips you have encoded.
-          </p>
-        </div>
+      {errorMsg && <Alert variant="error">{errorMsg}</Alert>}
 
-        {errorMsg && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-md">
-            {errorMsg}
-          </div>
-        )}
-
-        {slips.length === 0 && !errorMsg && (
+      {slips.length === 0 && !errorMsg && (
+        <Card>
           <p className="text-sm text-gray-500">
             You haven&apos;t created any availment slips yet.
           </p>
-        )}
+        </Card>
+      )}
 
-        <div className="space-y-2">
-  {slips.length === 0 && (
-    <p className="text-sm text-slate-400">
-      You haven't created any availment slips yet.
-    </p>
-  )}
+      <div className="space-y-2">
+        {slips.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => router.push(`/pharmacist/availments/${s.id}`)}
+            className="w-full text-left bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-semibold text-gray-900">
+                {s.patient_name || "Unknown patient"}
+              </div>
+              <div className="text-xs text-gray-500">{s.date}</div>
+            </div>
 
-  {slips.map((s) => (
-    <button
-      key={s.id}
-      onClick={() => router.push(`/pharmacist/availments/${s.id}`)}
-      className="w-full text-left bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 shadow-sm"
-    >
-      <div className="flex justify-between items-center">
-        <div className="text-sm font-semibold text-gray-900">
-          {s.patient_name || "Unknown patient"}
-        </div>
-        <div className="text-xs text-gray-500">{s.date}</div>
+            <div className="text-xs text-gray-600 mt-0.5">
+              Txn: {s.transaction_number || "—"}
+            </div>
+
+            <div className="text-[11px] text-gray-500 mt-1">
+              Total: ₱{s.total?.toFixed?.(2) || "0.00"} | Covered: ₱
+              {s.amount_covered?.toFixed?.(2) || "0.00"}
+            </div>
+          </button>
+        ))}
       </div>
-
-      <div className="text-xs text-gray-600">
-        Txn: {s.transaction_number || "—"}
-      </div>
-
-      <div className="text-[11px] text-gray-500 mt-1">
-        Total: ₱{s.total?.toFixed?.(2) || "0.00"} | Covered: ₱
-        {s.amount_covered?.toFixed?.(2) || "0.00"}
-      </div>
-    </button>
-  ))}
-</div>
-
-      </div>
-    </main>
+    </PageContainer>
   );
 }
