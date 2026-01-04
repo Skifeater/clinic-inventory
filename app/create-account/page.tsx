@@ -1,413 +1,402 @@
-// app/create-account/page.tsx
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "../../lib/supabaseClient"; // adjust path if needed
+import { useRouter } from "next/navigation";
+import { supabase } from "../../lib/supabaseClient";
 
-type Role = "physician" | "pharmacist" | "manager";
+const initialForm = {
+  full_name: "",
+  phone_number: "",
+  email: "",
+  birthday: "",
+  role: "physician", // must match DB check: 'physician' | 'pharmacist' | 'manager'
+  prc_number: "",
+  prc_validity: "",
+  gamot_facility_name: "",
+  gamot_facility_philhealth_accreditation: "",
+  pcb_provider_name: "",
+  pcb_provider_philhealth_accreditation: "",
+  password: "",
+  confirm_password: "",
+};
 
 export default function CreateAccountPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const [form, setForm] = useState(initialForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    phone: "",
-    birthday: "",
-    role: "" as Role | "",
-    prcNo: "",
-    prcValidity: "",
-    gamotFacilityName: "",
-    gamotAccreditationNo: "",
-    pcpName: "",
-    pcpAccreditationNo: "",
-  });
+  const isPhysician = form.role === "physician";
+  const isPharmacist = form.role === "pharmacist";
+  const isManager = form.role === "manager";
+  const needsGamotFacility = isPharmacist || isManager;
 
-  const handleChange = (field: keyof typeof form, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
+    setError("");
+    setSuccess("");
 
-    if (!form.email || !form.password || !form.fullName) {
-      setErrorMsg("Please fill in at least Full Name, Email, and Password.");
+    // Basic validation
+    if (!form.full_name || !form.email || !form.role) {
+      setError("Full name, email, and role are required.");
       return;
     }
 
-    if (form.password !== form.confirmPassword) {
-      setErrorMsg("Passwords do not match.");
+    if (!form.password) {
+      setError("Password is required.");
       return;
     }
 
-    setLoading(true);
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
 
-    // 1) Create auth user
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: form.email.trim(),
-      password: form.password,
-    });
+    if (form.password !== form.confirm_password) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    // Role-specific validation
+    if (isPhysician) {
+      if (!form.pcb_provider_name || !form.pcb_provider_philhealth_accreditation) {
+        setError(
+          "Primary Care Benefit Provider name and PhilHealth accreditation are required for physicians."
+        );
+        return;
+      }
+    }
+
+    if (needsGamotFacility) {
+      if (
+        !form.gamot_facility_name ||
+        !form.gamot_facility_philhealth_accreditation
+      ) {
+        setError(
+          "GAMOT facility name and PhilHealth accreditation are required for pharmacists and pharmacy managers."
+        );
+        return;
+      }
+    }
+
+    setSubmitting(true);
+
+    // 1️⃣ Create auth user
+    const { data: signUpData, error: signUpError } =
+      await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
 
     if (signUpError || !signUpData.user) {
       console.error(signUpError);
-      setErrorMsg(signUpError?.message || "Error creating account.");
-      setLoading(false);
+      setSubmitting(false);
+      setError(
+        signUpError?.message ||
+          "Failed to create account (email may already exist)."
+      );
       return;
     }
 
-    const user = signUpData.user;
+    const authUser = signUpData.user;
 
-    // 2) Insert profile row
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: user.id,
-      full_name: form.fullName,
-      email: form.email.trim(),
-      phone: form.phone || null,
-      birthday: form.birthday || null,
-      role: form.role || null,
-      prc_num: form.prcNo || null,
-      prc_validity: form.prcValidity || null,
-      gamot_facility_name: form.gamotFacilityName || null,
-      gamot_accreditation_no: form.gamotAccreditationNo || null,
-      pcp_name: form.pcpName || null,
-      pcp_accreditation_no: form.pcpAccreditationNo || null,
-    });
+    // 2️⃣ Insert into `profiles` table, linked by id = auth user id
+    const { error: profileError } = await supabase.from("profiles").insert([
+      {
+        id: authUser.id,
+        full_name: form.full_name,
+        phone: form.phone_number || null,
+        email: form.email,
+        birthday: form.birthday || null,
+        role: form.role,
+        prc_number: form.prc_number || null,
+        prc_validity: form.prc_validity || null,
+        gamot_facility_name: needsGamotFacility ? form.gamot_facility_name : null,
+        gamot_accreditation_no: needsGamotFacility
+          ? form.gamot_facility_philhealth_accreditation
+          : null,
+        pcb_provider_name: isPhysician ? form.pcb_provider_name : null,
+        pcb_provider_philhealth_accreditation: isPhysician
+          ? form.pcb_provider_philhealth_accreditation
+          : null,
+      },
+    ]);
+
+    setSubmitting(false);
 
     if (profileError) {
       console.error(profileError);
-      setErrorMsg(profileError.message || "Error saving profile.");
-      setLoading(false);
+      setError(
+        profileError.message || "Auth user created, but failed to save profile."
+      );
       return;
     }
 
-    setLoading(false);
-    setSuccessMsg(
-      "Account created successfully. Please check your email to confirm your account."
-    );
 
-    // Optional: redirect to login after a short delay
-    setTimeout(() => {
-      router.push("/login");
-    }, 1500);
-  };
-
-  const isPrescribingRole = form.role === "physician" || form.role === "pharmacist";
+    setForm(initialForm);
+    setSuccess("Account created successfully. You can now log in.");
+    // If you want to auto-redirect instead of message:
+    // router.push("/login");
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      {/* Top bar (same style as Home) */}
+      {/* Top bar */}
       <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white font-bold">
-              G
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">
-                GAMOT e-Clinic
-              </h1>
-              <p className="text-xs text-gray-500">
-                Inventory &amp; e-Prescription System
-              </p>
-            </div>
-          </div>
-
-          <span className="text-xs text-gray-400 hidden sm:inline">
-            Create account
-          </span>
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="font-semibold text-sm text-gray-900">
+            GAMOT e-Clinic
+          </Link>
+          <Link
+            href="/"
+            className="text-xs text-gray-500 hover:text-gray-800"
+          >
+            ← Back to home
+          </Link>
         </div>
       </header>
 
-      {/* Content */}
-      <section className="flex-1 flex items-center">
-        <div className="w-full max-w-3xl mx-auto px-4 py-8">
-          <div className="grid gap-8 md:grid-cols-[1.1fr,0.9fr] items-start">
-            {/* Left: form card */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 md:p-7 space-y-5">
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold">Create an account</h2>
-                <p className="text-sm text-gray-500">
-                  Fill out your basic details and facility information. This will
-                  be used for prescriptions and availment slips.
-                </p>
-              </div>
+      <section className="flex-1">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <h1 className="text-2xl font-semibold mb-1">Create account</h1>
+          <p className="text-sm text-gray-500 mb-5">
+            Register a Physician, Pharmacist, or Pharmacy Manager. This will be
+            used for prescriptions and availment slips.
+          </p>
 
-              {errorMsg && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-md">
-                  {errorMsg}
-                </div>
-              )}
+          {error && (
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              {success}
+            </div>
+          )}
 
-              {successMsg && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm px-3 py-2 rounded-md">
-                  {successMsg}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Basic info */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                      value={form.fullName}
-                      onChange={(e) => handleChange("fullName", e.target.value)}
-                      placeholder="Dr. Juan Dela Cruz"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                        value={form.email}
-                        onChange={(e) => handleChange("email", e.target.value)}
-                        placeholder="name@clinic.ph"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Mobile Number
-                      </label>
-                      <input
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                        value={form.phone}
-                        onChange={(e) => handleChange("phone", e.target.value)}
-                        placeholder="09XXXXXXXXX"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Birthday
-                      </label>
-                      <input
-                        type="date"
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                        value={form.birthday}
-                        onChange={(e) => handleChange("birthday", e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Role
-                      </label>
-                      <select
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                        value={form.role}
-                        onChange={(e) =>
-                          handleChange("role", e.target.value as Role)
-                        }
-                      >
-                        <option value="">Select role</option>
-                        <option value="physician">Physician</option>
-                        <option value="pharmacist">Pharmacist</option>
-                        <option value="manager">Pharmacy Manager</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* PRC & Professional */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold tracking-[0.15em] text-gray-500 uppercase">
-                    Professional Details
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        PRC Number {isPrescribingRole && <span className="text-red-500">*</span>}
-                      </label>
-                      <input
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                        value={form.prcNo}
-                        onChange={(e) => handleChange("prcNo", e.target.value)}
-                        placeholder="1234567"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        PRC Validity
-                      </label>
-                      <input
-                        type="date"
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900"
-                        value={form.prcValidity}
-                        onChange={(e) =>
-                          handleChange("prcValidity", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* GAMOT Facility */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold tracking-[0.15em] text-gray-500 uppercase">
-                    GAMOT Facility
-                  </h3>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      Facility Name
-                    </label>
-                    <input
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                      value={form.gamotFacilityName}
-                      onChange={(e) =>
-                        handleChange("gamotFacilityName", e.target.value)
-                      }
-                      placeholder="ABC GAMOT Pharmacy"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      PhilHealth GAMOT Accreditation No.
-                    </label>
-                    <input
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                      value={form.gamotAccreditationNo}
-                      onChange={(e) =>
-                        handleChange("gamotAccreditationNo", e.target.value)
-                      }
-                      placeholder="PH-XXXX-YYYY"
-                    />
-                  </div>
-                </div>
-
-                {/* Primary Care Provider (optional) */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold tracking-[0.15em] text-gray-500 uppercase">
-                    Primary Care Benefit Provider (optional)
-                  </h3>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      PCP Provider Name
-                    </label>
-                    <input
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                      value={form.pcpName}
-                      onChange={(e) => handleChange("pcpName", e.target.value)}
-                      placeholder="XYZ Primary Care Clinic"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
-                      PCP PhilHealth Accreditation No.
-                    </label>
-                    <input
-                      className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                      value={form.pcpAccreditationNo}
-                      onChange={(e) =>
-                        handleChange("pcpAccreditationNo", e.target.value)
-                      }
-                      placeholder="PCP-XXXX-YYYY"
-                    />
-                  </div>
-                </div>
-
-                {/* Password section */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-semibold tracking-[0.15em] text-gray-500 uppercase">
-                    Login Credentials
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                        value={form.password}
-                        onChange={(e) =>
-                          handleChange("password", e.target.value)
-                        }
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Confirm Password
-                      </label>
-                      <input
-                        type="password"
-                        className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
-                        value={form.confirmPassword}
-                        onChange={(e) =>
-                          handleChange("confirmPassword", e.target.value)
-                        }
-                        placeholder="••••••••"
-                      />
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-gray-500">
-                    Your email may need to be confirmed before you can log in.
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 disabled:opacity-60 shadow-sm"
-                >
-                  {loading ? "Creating account..." : "Create Account"}
-                </button>
-              </form>
+          <form
+            onSubmit={handleSubmit}
+            className="grid gap-4 md:grid-cols-2 bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
+          >
+            {/* Full name */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Full Name *
+              </label>
+              <input
+                name="full_name"
+                value={form.full_name}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="Dr. Juan Dela Cruz"
+              />
             </div>
 
-            {/* Right: helper text */}
-            <div className="space-y-4 text-sm text-gray-600">
-              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-                <h3 className="text-sm font-semibold mb-1">
-                  How this information is used
-                </h3>
-                <p className="text-xs text-gray-500 mb-3">
-                  Your profile details appear on electronic prescriptions,
-                  availment slips, and audit logs so PhilHealth and the
-                  facility can verify transactions.
-                </p>
-                <ul className="text-xs text-gray-500 space-y-1.5 list-disc list-inside">
-                  <li>PRC details are required for prescribing roles.</li>
-                  <li>
-                    Facility and accreditation numbers show on official forms.
-                  </li>
-                  <li>
-                    You can update non-critical details later through the admin
-                    or manager.
-                  </li>
-                </ul>
-              </div>
-
-              <p className="text-xs text-gray-500 text-center">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-emerald-600 hover:text-emerald-500 font-medium"
-                >
-                  Log in here
-                </Link>
-                .
-              </p>
+            {/* Email */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Email *
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="name@example.com"
+              />
             </div>
-          </div>
+
+            {/* Phone */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Phone Number
+              </label>
+              <input
+                name="phone_number"
+                value={form.phone_number}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="09XXXXXXXXX"
+              />
+            </div>
+
+            {/* Birthday */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Birthday
+              </label>
+              <input
+                type="date"
+                name="birthday"
+                value={form.birthday}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+              />
+            </div>
+
+            {/* Role */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Role *
+              </label>
+              <select
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+              >
+                <option value="physician">Physician</option>
+                <option value="pharmacist">Pharmacist</option>
+                <option value="manager">Pharmacy Manager</option>
+              </select>
+            </div>
+
+            {/* PRC number */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                PRC Number (for Physician / Pharmacist)
+              </label>
+              <input
+                name="prc_number"
+                value={form.prc_number}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="XXXXX"
+              />
+            </div>
+
+            {/* PRC validity */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                PRC Validity
+              </label>
+              <input
+                type="date"
+                name="prc_validity"
+                value={form.prc_validity}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+              />
+            </div>
+
+            {/* GAMOT facility name */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Name of GAMOT Facility{" "}
+                {needsGamotFacility && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                name="gamot_facility_name"
+                value={form.gamot_facility_name}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="GAMOT Pharmacy - BGC"
+                required={needsGamotFacility}
+                disabled={isPhysician}
+              />
+            </div>
+
+            {/* GAMOT facility PhilHealth */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                PhilHealth Accreditation No. (GAMOT Facility){" "}
+                {needsGamotFacility && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                name="gamot_facility_philhealth_accreditation"
+                value={form.gamot_facility_philhealth_accreditation}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                required={needsGamotFacility}
+                disabled={isPhysician}
+              />
+            </div>
+
+            {/* PCB provider name */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Primary Care Benefit Provider Name{" "}
+                {isPhysician && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                name="pcb_provider_name"
+                value={form.pcb_provider_name}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="e.g. PhilHealth Konsulta Provider"
+                required={isPhysician}
+                disabled={needsGamotFacility}
+              />
+            </div>
+
+            {/* PCB provider PhilHealth */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                PhilHealth Accreditation No. (PCBP Facility){" "}
+                {isPhysician && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                name="pcb_provider_philhealth_accreditation"
+                value={form.pcb_provider_philhealth_accreditation}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                required={isPhysician}
+                disabled={needsGamotFacility}
+              />
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Password *
+              </label>
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* Confirm password */}
+            <div className="flex flex-col">
+              <label className="text-xs font-medium mb-1 text-gray-700">
+                Confirm Password *
+              </label>
+              <input
+                type="password"
+                name="confirm_password"
+                value={form.confirm_password}
+                onChange={handleChange}
+                className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="md:col-span-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 disabled:opacity-60 shadow-sm"
+              >
+                {submitting ? "Creating account..." : "Create Account"}
+              </button>
+            </div>
+          </form>
         </div>
       </section>
     </main>
