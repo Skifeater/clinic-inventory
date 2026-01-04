@@ -1,6 +1,6 @@
 export function Input({ 
   label, 
-  error, 
+  error = null, 
   className = "", 
   required = false,
   ...props 
